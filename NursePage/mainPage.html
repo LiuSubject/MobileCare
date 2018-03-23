@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>移动护理首页</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<style>
+			html,
+			body {
+				background-color: #efeff4;
+			}
+			p {
+				text-indent: 22px;
+			}
+			span.mui-icon {
+				font-size: 14px;
+				color: #007aff;
+				margin-left: -15px;
+				padding-right: 10px;
+			}
+			.mui-off-canvas-left {
+				color: #fff;
+			}
+			.title {
+				margin: 35px 15px 10px;
+			}
+			.title+.content {
+				margin: 10px 15px 35px;
+				color: #bbb;
+				text-indent: 1em;
+				font-size: 14px;
+				line-height: 24px;
+			}
+			input {
+				color: #000;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="offCanvasWrapper" class="mui-off-canvas-wrap mui-draggable">
+			<!--侧滑菜单部分 start-->
+			<aside id="offCanvasSide" class="mui-off-canvas-left">
+				<div id="offCanvasSideScroll" class="mui-scroll-wrapper">
+					<div class="mui-scroll">
+						<div class="title" style="margin-bottom: 25px;">执行列表</div>
+						<ul class="mui-table-view mui-table-view-chevron mui-table-view-inverted">
+							<li class="mui-table-view-cell">
+								<a id="main_drugCheckBtn" class="mui-navigate-right">
+									药品核对
+								</a>
+							</li>
+							<li class="mui-table-view-cell">
+								<a id="main_patientInfoBtn" class="mui-navigate-right">
+									基本信息
+								</a>
+							</li>
+							<li class="mui-table-view-cell">
+								<a id="main_STCheckBtn" class="mui-navigate-right">
+									皮试结果
+								</a>
+							</li>
+							<li class="mui-table-view-cell">
+								<a id="main_inspectionBtn" class="mui-navigate-right">
+									检验核对
+								</a>
+							</li>
+							<li class="mui-table-view-cell">
+								<a id="main_transfusionBtn" class="mui-navigate-right">
+									输血核对
+								</a>
+							</li>
+						</ul>
+						<div class="content">
+							<p style="margin: 10px 15px;">
+								<button id="offCanvasHide" type="button" class="mui-btn mui-btn-danger mui-btn-block" style="padding: 5px 20px;">关闭菜单</button>
+							</p>
+						</div>
+					</div>
+				</div>
+			</aside>
+			<!--侧滑菜单部分 end-->
+			
+			<!--主界面部分 start-->
+			<div class="mui-inner-wrap">
+				<header class="mui-bar mui-bar-nav">
+					<a href="#offCanvasSide" class="mui-icon mui-action-menu mui-icon-bars mui-pull-left"></a>
+					<h1 id="main_moduleTitle" class="mui-title">移动护理</h1>
+				</header>
+				<div id="offCanvasContentScroll" class="mui-content mui-scroll-wrapper">
+					<div id="main_content" class="mui-scroll" > 
+						<!--id ='main-content'的div中間放業務頁面-->
+					</div>
+				</div>
+				<!-- off-canvas backdrop -->
+				<div class="mui-off-canvas-backdrop"></div>
+			</div>
+			<!--主界面部分 end-->
+			
+			<!--底部菜单栏 start-->
+			<nav class="mui-bar mui-bar-tab page-footer ">
+				<a id="doBtn" name="doBtn" class="mui-tab-item mui-active active" style="width: 33%; text-align: center;padding: 2% 0 1%;">
+					<img src="../images/footer01.png" style="width: 25%;" />
+					<span class="mui-tab-item " style=" font-size: .9em; color: #333;height: 1em;">执行</span>
+				</a>
+				<a id="scanPatientBtn" name="scanPatientBtn" class="mui-tab-item mui-active" style="width: 33%; text-align: center; padding: 2% 0 1%;">
+					<img src="../images/footer002.png" style="width: 25%;"/>
+					<span class="mui-tab-item" style="font-size: .9em; color: #333;height: 1em;">浏览病人</span>
+				</a>
+	 
+				<a id="userBtn" name="userBtn" class="mui-tab-item mui-active" style="width: 33%; text-align: center;padding: 2% 0 1%;">
+					<img src="../images/footer004.png" style="width: 25%;"/>
+					<span class="mui-tab-item" style="font-size: .9em; color: #333;height: 1em;">我的</span>
+				</a>
+			</nav>
+			<!--底部菜单栏 end-->
+		</div>
+		<script src="../js/mui.min.js"></script>
+		<script src="../js/jquery.min.js"></script>
+		<script type="text/javascript">
+			(function($, doc) {
+				mui.init(); 
+				jQuery.noConflict();
+				mui.plusReady(function() {
+					//加载数据
+					var url = APPINFO.serverURL + '/mobileadmin/dealEngineRoomInspection';
+					alert(url);
+					mui.ajax(url, {
+						data: {
+							id: plus.webview.currentWebview().thisId
+						},
+						dataType: 'json', // 服务器返回 json 格式数据
+						type: 'GET', //HTTP 请求类型
+						timeout: 5000, // 超时时间设置为 5 秒；
+						success: function(data) {
+							// 服务器返回响应，根据响应结果，分析是否登录成功；
+							if(data.success == 'true') {
+								jQuery('#inspectionform').form('load', data.engineRoomInspection);
+								//关闭等待动画
+								jQuery(".loading").addClass("loader-chanage")
+								jQuery(".loading").fadeOut(500)
+							} else if(data.success == 'false') {
+								plus.nativeUI.toast(data.msg);
+							} else {
+								plus.nativeUI.toast("状态异常");
+							}
+
+						},
+						error: function(xhr, type, errorThrown) {
+							// 异常处理；
+							plus.nativeUI.toast('请保持网络畅通');
+						}
+					});
+				});
+
+				/*执行菜单事件 start*/
+				var doBtn = doc.getElementById('doBtn');//执行菜单按钮
+				doBtn.addEventListener('tap', function(event) {
+					mui('#main_content').load('drugCheckPage.html',function(response){
+						jQuery("#main_moduleTitle").text("药品核对");
+					});
+				});
+				/*执行菜单事件 end*/
+				
+				/*浏览病人事件 start*/
+				var scanPatientBtn = doc.getElementById('scanPatientBtn');
+				scanPatientBtn.addEventListener('tap', function(event) {
+					mui('#main_content').load('scanPatientPage.html',function(response){
+						jQuery("#main_moduleTitle").text("浏览病人");
+					});
+				});
+				/*浏览病人事件end*/
+				
+				/*我的事件 start*/
+				var userBtn = doc.getElementById('userBtn');//“我的”按钮
+				userBtn.addEventListener('tap', function(event) {
+					mui('#main_content').load('userPage.html',function(response){
+						jQuery("#main_moduleTitle").text("我的信息");
+					});
+				});
+				/*我的事件end*/
+				
+				/*药品核对 start*/
+				var main_drugCheckBtn = doc.getElementById('main_drugCheckBtn');//“药品核对”按钮
+				main_drugCheckBtn.addEventListener('tap', function(event) {
+					mui('#main_content').load('drugCheckPage.html',function(response){
+						jQuery("#main_moduleTitle").text("药品核对");
+						offCanvasWrapper.offCanvas('close');
+					});
+				});
+				/*药品核对 end*/
+				
+				/*病人基本信息 start*/
+				var main_patientInfoBtn = doc.getElementById('main_patientInfoBtn');//“基本信息”按钮
+				main_patientInfoBtn.addEventListener('tap', function(event) {
+					mui('#main_content').load('patientInfoPage.html',function(response){
+						jQuery("#main_moduleTitle").text("病人基本信息");
+						offCanvasWrapper.offCanvas('close');
+					});
+				});
+				/*病人基本信息 end*/
+				
+				/*皮试结果 start*/
+				var main_STCheckBtn = doc.getElementById('main_STCheckBtn');//“皮试结果”按钮
+				main_STCheckBtn.addEventListener('tap', function(event) {
+					mui('#main_content').load('STCheckPage.html',function(response){
+						jQuery("#main_moduleTitle").text("皮试结果");
+						offCanvasWrapper.offCanvas('close');
+					});
+				});
+				/*皮试结果 end*/
+				
+				/*检验核对 start*/
+				var main_inspectionBtn = doc.getElementById('main_inspectionBtn');//“检验核对”按钮
+				main_inspectionBtn.addEventListener('tap', function(event) {
+					mui('#main_content').load('inspectionPage.html',function(response){
+						jQuery("#main_moduleTitle").text("检验核对");
+						offCanvasWrapper.offCanvas('close');
+					});
+				});
+				/*检验核对 end*/
+				
+				/*输血核对 start*/
+				var main_transfusionBtn = doc.getElementById('main_transfusionBtn');//“输血核对”按钮
+				main_transfusionBtn.addEventListener('tap', function(event) {
+					mui('#main_content').load('transfusionPage.html',function(response){
+						jQuery("#main_moduleTitle").text("输血核对");
+						offCanvasWrapper.offCanvas('close');
+					});
+				});
+				/*输血核对 end*/
+				
+			}(mui, document));
+
+		</script>
+		
+		<script>
+			mui.init();
+			 //侧滑容器父节点
+			var offCanvasWrapper = mui('#offCanvasWrapper');
+			 //主界面容器
+			var offCanvasInner = offCanvasWrapper[0].querySelector('.mui-inner-wrap');
+			 //菜单容器
+			var offCanvasSide = document.getElementById("offCanvasSide");
+			 //移动效果是否为整体移动
+			var moveTogether = false;
+			 //侧滑容器的class列表，增加.mui-slide-in即可实现菜单移动、主界面不动的效果；
+			var classList = offCanvasWrapper[0].classList;
+			
+			offCanvasSide.classList.remove('mui-transitioning');
+			offCanvasSide.setAttribute('style', '');
+			classList.remove('mui-slide-in');
+			classList.remove('mui-scalable');
+			offCanvasWrapper[0].insertBefore(offCanvasSide, offCanvasWrapper[0].firstElementChild);
+			 //菜单界面，‘关闭菜单’按钮的点击事件
+			document.getElementById('offCanvasHide').addEventListener('tap', function() {
+				offCanvasWrapper.offCanvas('close');
+			});
+			 //主界面和侧滑菜单界面均支持区域滚动；
+			mui('#offCanvasSideScroll').scroll();
+			mui('#offCanvasContentScroll').scroll();
+			 //实现ios平台原生侧滑关闭页面；
+			if (mui.os.plus && mui.os.ios) {
+				mui.plusReady(function() { //5+ iOS暂时无法屏蔽popGesture时传递touch事件，故该demo直接屏蔽popGesture功能
+					plus.webview.currentWebview().setStyle({
+						'popGesture': 'none'
+					});
+				});
+			}
+		</script>
+	</body>
+
+</html>

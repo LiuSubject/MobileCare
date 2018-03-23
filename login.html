@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html class="ui-page-login">
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title>移动护理</title>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<link href="css/style.css" rel="stylesheet" />
+		<style>
+			.area {
+				margin: 20px auto 0px auto;
+			}
+			
+			.mui-input-group {
+				margin-top: 10px;
+			}
+			
+			.mui-input-group:first-child {
+				margin-top: 20px;
+			}
+			
+			.mui-input-group label {
+				width: 22%;
+			}
+			
+			.mui-input-row label~input,
+			.mui-input-row label~select,
+			.mui-input-row label~textarea {
+				width: 78%;
+			}
+			
+			.mui-checkbox input[type=checkbox],
+			.mui-radio input[type=radio] {
+				top: 6px;
+			}
+			
+			.mui-content-padded {
+				margin-top: 25px;
+			}
+			
+			.mui-btn {
+				padding: 10px;
+			}
+			
+			.link-area {
+				display: block;
+				margin-top: 25px;
+				text-align: center;
+			}
+			
+			.spliter {
+				color: #bbb;
+				padding: 0px 8px;
+			}
+			
+			.oauth-area {
+				position: absolute;
+				bottom: 20px;
+				left: 0px;
+				text-align: center;
+				width: 100%;
+				padding: 0px;
+				margin: 0px;
+			}
+			
+			.oauth-area .oauth-btn {
+				display: inline-block;
+				width: 50px;
+				height: 50px;
+				background-size: 30px 30px;
+				background-position: center center;
+				background-repeat: no-repeat;
+				margin: 0px 20px;
+				/*-webkit-filter: grayscale(100%); */
+				border: solid 1px #ddd;
+				border-radius: 25px;
+			}
+			
+			.oauth-area .oauth-btn:active {
+				border: solid 1px #aaa;
+			}
+			
+			.oauth-area .oauth-btn.disabled {
+				background-color: #ddd;
+			}
+			
+			#updateLink {
+				color: #929292
+			}
+		</style>
+
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+			<h1 class="mui-title">移动护理</h1>
+		</header>
+		<div class="mui-content">
+			<form id='login-form' class="mui-input-group">
+				<div class="mui-input-row">
+					<input id='account' type="text" class="mui-input-clear mui-input" placeholder="工号">
+				</div>
+				<div class="mui-input-row">
+					<input id='password' type="password" class="mui-input-clear mui-input" placeholder="密码">
+				</div>
+			</form>
+
+			<div class="mui-content-padded">
+				<button id='login' class="mui-btn mui-btn-block mui-btn-primary">登录</button>
+				<div class="link-area">
+					<a id='updateLink'>—&nbsp;检查更新&nbsp;—</a>
+				</div>
+
+			</div>
+			<div class="mui-content-padded oauth-area">
+
+			</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/mui.enterfocus.js"></script>
+		<script src="js/app.js"></script>
+		<script src="js/encryption.js"></script>
+		<script src="js/APPINFO.js"></script>
+		<script src="js/jquery.min.js"></script>
+		<script src="js/scanG03.js"></script>
+		<script>
+			(function($, doc) {
+				jQuery.noConflict();
+				$.init({
+					statusBarBackground: '#f7f7f7'
+				});
+				$.plusReady(function() {
+					
+					plus.screen.lockOrientation("portrait-primary");
+					var settings = app.getSettings();
+					var state = app.getState();
+
+					var userscode = localStorage.getItem('userscode') || '';
+					var userspsd = localStorage.getItem('userspsd') || '';
+					document.getElementById("account").value = userscode;
+					document.getElementById("password").value = userspsd;
+					var main_loaded_flag = false;
+					var mainNormal_loaded_flag = false;
+					var mainPage = null;
+					var mainNormalPage = null;
+
+					/*定義登陸后頁面跳轉事件對象*/
+					var toMain = function(data) {
+						//使用定时器的原因：
+						//可能执行太快，main页面loaded事件尚未触发就执行自定义事件，此时必然会失败
+						mui.openWindow({
+						    url: 'NursePage/mainPage.html', //登陆后跳转到此页面
+						    id:'main',
+						    show: {
+								aniShow: 'pop-in'
+							},
+							waiting: {
+								autoShow: false
+							}
+						});
+
+					};
+					
+					/*定義登陸事件對象*/
+					var loginFunction = function() {
+						
+						var url = APPINFO.serverURL + '/mobilelogin';//登陆服务请求地址
+						var url = "http://172.16.28.100:8081/MobNurCall.asmx";
+						var usercode = document.getElementById("account").value;
+						var userspsd = document.getElementById("password").value;
+						localStorage.setItem('userscode', usercode);
+						localStorage.setItem('userspsd', userspsd);
+						userspsd = Encrypting(usercode, userspsd);
+						//获取当前用户ID
+						var ClientInfo = plus.push.getClientInfo();
+						var clientid = ClientInfo.clientid;
+						var data= {
+								code: usercode,
+								psd: userspsd,
+								userclientid: clientid
+							}
+						//toMain(data);
+						mui.ajax(url, {
+							data: {
+								code: usercode,
+								psd: userspsd,
+								userclientid: clientid
+							},
+							dataType: 'json', // 服务器返回 json 格式数据
+							type: 'post', //HTTP 请求类型
+							timeout: 10000, // 超时时间设置为 10 秒；
+							success: function(data) {
+								// 服务器返回响应，根据响应结果，分析是否登录成功；
+								if(data.success == 'true') {
+									toMain(data);
+								} else if(data.success == 'false') {
+									
+									plus.nativeUI.toast("徐芳登陸失敗"+data.msg);
+								} else {
+									plus.nativeUI.toast("徐芳else登陸失敗"+"抱歉，登陆失败");
+								}
+							},
+							error: function(xhr, type, errorThrown) {
+								// 异常处理；
+								plus.nativeUI.toast('网络异常');
+							}
+						});
+
+
+						var loginInfo = {
+							account: usercode,
+							password: userspsd
+						};
+
+						app.login(loginInfo, function(err) {
+							if(err) {
+								plus.nativeUI.toast(err);
+								return;
+							}
+						});
+
+					};
+					
+					// close splash
+					setTimeout(function() {
+						//关闭 splash
+						plus.navigator.closeSplashscreen();
+					}, 600);
+					//检查 "登录状态/锁屏状态" 结束
+					var loginButton = doc.getElementById('login');
+					var accountBox = doc.getElementById('account');
+					var passwordBox = doc.getElementById('password');
+
+					var updateButton = doc.getElementById('updateLink');
+
+					//登录按钮触发事件
+					loginButton.addEventListener('tap', function(event) {
+						loginFunction();
+					});
+
+					//检查更新按钮触发事件
+					updateButton.addEventListener('tap', function(event) {
+						var wgtver;
+						plus.runtime.getProperty(plus.runtime.appid, function(inf) {
+							wgtVer = inf.version;
+						});
+						checkUpdate();
+					});
+
+					// 检测更新
+					var checkUrl = APPINFO.serverURL + "/mobileupdate";
+
+					function checkUpdate() {
+						plus.nativeUI.showWaiting("检查更新中...");
+						var xhr = new XMLHttpRequest();
+						xhr.onreadystatechange = function() {
+							switch(xhr.readyState) {
+								case 4:
+									plus.nativeUI.closeWaiting();
+									if(xhr.status == 200) {
+										console.log("检测更新成功：" + xhr.responseText);
+										var response = jQuery.parseJSON(xhr.responseText);
+										var serverVer = response.version;
+										if(wgtVer && serverVer && (wgtVer != serverVer)) {
+											downWgt(response.wgtPath, serverVer); // 下载升级包
+										} else if(wgtVer == serverVer) {
+											plus.nativeUI.toast("版本已是最新");
+										} else {
+											plus.nativeUI.toast("检测更新失败");
+										}
+									} else {
+										console.log("检测更新失败");
+										plus.nativeUI.toast("检测更新失败");
+									}
+									break;
+								default:
+									break;
+							}
+						}
+						xhr.open('GET', checkUrl);
+						xhr.send();
+					}
+
+					function downWgt(wgtUrl, version) {
+						plus.nativeUI.showWaiting("下载更新文件中");
+						plus.downloader.createDownload(wgtUrl, {
+							filename: "_doc/update/"
+						}, function(d, status) {
+							if(status == 200) {
+								console.log("下载更新文件成功：" + d.filename);
+								installWgt(d.filename, version); // 安装wgt包
+							} else {
+								console.log("下载更新文件失败");
+								plus.nativeUI.toast("下载更新文件失败");
+							}
+							plus.nativeUI.closeWaiting();
+						}).start();
+					}
+
+					// 更新应用资源
+					function installWgt(path, version) {
+						plus.nativeUI.showWaiting("安装更新文件中...");
+						plus.runtime.install(path, {}, function() {
+							plus.nativeUI.closeWaiting();
+							console.log("安装更新文件成功！");
+							plus.nativeUI.toast("应用更新完成！", function() {
+								APPINFO.version = version;
+								plus.runtime.restart();
+							});
+						}, function(e) {
+							plus.nativeUI.closeWaiting();
+							console.log("安装更新文件失败[" + e.code + "]：" + e.message);
+							plus.nativeUI.toast("安装更新文件失败[" + e.code + "]：" + e.message);
+						});
+					}
+
+					$.enterfocus('#login-form input', function() {
+						$.trigger(loginButton, 'tap');
+					});
+					
+					//切换用户时，清空除登录页面的所有预加载页面
+					jQuery("#account").focus(function(){
+						var array = plus.webview.all();
+						var curr = plus.webview.currentWebview();
+				        if(array){
+				            for(var i=0,len=array.length;i<len;i++){
+				            	if (array[i].getURL() == curr.getURL()){
+				            		continue;
+				            	}
+                                plus.webview.close(array[i]);
+				            
+				            }
+				        }
+					});
+					
+					var backButtonPress = 0;
+					$.back = function(event) {
+						backButtonPress++;
+						if(backButtonPress > 1) {
+							plus.runtime.quit();
+						} else {
+							plus.nativeUI.toast('再按一次退出应用');
+						}
+						setTimeout(function() {
+							backButtonPress = 0;
+						}, 1000);
+						return false;
+					};
+					
+					//自动登录
+					$("#login").onClick = loginFunction();
+					
+					//攝像頭掃描功能
+					scanG03($, doc);
+	
+				});
+			}(mui, document));
+
+		</script>
+	</body>
+
+</html>
